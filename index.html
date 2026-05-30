@@ -111,6 +111,25 @@ svg.ring{width:64px;height:64px;transform:rotate(-90deg)}
 .menu-new-row input[type="number"]:focus{border-color:var(--gold-dim);box-shadow:0 0 0 3px var(--gold-glow)}
 .btn-create{background:var(--bg4);color:var(--gold);border:1px solid var(--gold-dim);border-radius:var(--r-sm);padding:9px 14px;font-family:'Outfit',sans-serif;font-size:12px;font-weight:600;cursor:pointer;letter-spacing:.04em;transition:all .2s;white-space:nowrap;flex-shrink:0}
 .btn-create:hover{background:var(--gold);color:#0E0F0C;border-color:var(--gold)}.btn-create:active{transform:scale(.98)}
+.ai-section{padding:.875rem 1.25rem 1rem;border-top:1px solid var(--border);background:var(--bg2)}
+.ai-label{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#8B5CF6;font-weight:600;margin-bottom:.65rem;display:flex;align-items:center;gap:6px}
+.ai-label::before{content:'✦';font-size:10px}
+.ai-row{display:flex;gap:8px;align-items:center}
+.ai-row input[type="text"]{flex:1;background:var(--bg4);border:1px solid #3B2F6B;border-radius:var(--r-sm);padding:9px 12px;font-family:'Outfit',sans-serif;font-size:13px;color:var(--text);outline:none;transition:border-color .2s,box-shadow .2s}
+.ai-row input[type="text"]::placeholder{color:var(--text3)}
+.ai-row input[type="text"]:focus{border-color:#8B5CF6;box-shadow:0 0 0 3px rgba(139,92,246,0.15)}
+.btn-ai{background:#1E1535;color:#A78BFA;border:1px solid #3B2F6B;border-radius:var(--r-sm);padding:9px 14px;font-family:'Outfit',sans-serif;font-size:12px;font-weight:600;cursor:pointer;letter-spacing:.04em;transition:all .2s;white-space:nowrap;flex-shrink:0;display:flex;align-items:center;gap:5px}
+.btn-ai:hover{background:#8B5CF6;color:#fff;border-color:#8B5CF6}
+.btn-ai:disabled{opacity:.5;cursor:wait}
+.ai-result{margin-top:8px;background:#13102A;border:1px solid #3B2F6B;border-radius:var(--r-sm);padding:10px 14px;display:none;gap:10px;align-items:center;flex-wrap:wrap}
+.ai-result.visible{display:flex}
+.ai-result-name{font-size:13px;font-weight:500;color:var(--text);flex:1}
+.ai-result-kcal{font-size:16px;font-weight:700;color:#A78BFA;font-variant-numeric:tabular-nums}
+.btn-ai-add{background:#8B5CF6;color:#fff;border:none;border-radius:5px;padding:5px 12px;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s}
+.btn-ai-add:hover{background:#7C3AED}
+.btn-ai-save{background:transparent;color:#A78BFA;border:1px solid #3B2F6B;border-radius:5px;padding:5px 12px;font-family:'Outfit',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s}
+.btn-ai-save:hover{background:#1E1535}
+.ai-msg{font-size:11px;margin-top:5px;min-height:14px}
 .loading-overlay{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;gap:1rem;transition:opacity .4s}
 .loading-overlay.hidden{opacity:0;pointer-events:none}
 .loader-title{font-family:'Playfair Display',serif;font-size:2rem;background:linear-gradient(135deg,#F2F0E8 30%,var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
@@ -187,6 +206,20 @@ svg.ring{width:64px;height:64px;transform:rotate(-90deg)}
         </div>
         <div class="menu-search"><input type="text" id="menuSearch" placeholder="Buscar…"></div>
         <div class="menu-grid" id="menuGrid"><div class="menu-empty">Tu menu personal aparecera aqui</div></div>
+        <div class="ai-section">
+          <div class="ai-label">Preguntar a la IA</div>
+          <div class="ai-row">
+            <input type="text" id="aiInput" placeholder="Ej: un plato de pasta con tomate y queso…" autocomplete="off">
+            <button class="btn-ai" id="aiBtn">✦ Analizar</button>
+          </div>
+          <div class="ai-result" id="aiResult">
+            <div class="ai-result-name" id="aiResultName"></div>
+            <div class="ai-result-kcal" id="aiResultKcal"></div>
+            <button class="btn-ai-add" id="aiAddDay">+ Añadir al día</button>
+            <button class="btn-ai-save" id="aiSaveMenu">Guardar en menú</button>
+          </div>
+          <div class="ai-msg" id="aiMsg"></div>
+        </div>
         <div class="menu-new-food">
           <div class="section-label">Crear nuevo alimento</div>
           <div class="menu-new-row">
@@ -399,6 +432,79 @@ async function deleteFood(id){
 document.getElementById('createFoodBtn').addEventListener('click',createFood);
 document.getElementById('newFoodName').addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();document.getElementById('newFoodKcal').focus()}});
 document.getElementById('newFoodKcal').addEventListener('keydown',function(e){if(e.key==='Enter')createFood()});
+
+// ── IA CALORIAS ──
+var aiData=null;
+
+async function askAI(){
+  var input=document.getElementById('aiInput').value.trim();
+  var msg=document.getElementById('aiMsg');
+  var result=document.getElementById('aiResult');
+  var btn=document.getElementById('aiBtn');
+  if(!input){msg.textContent='Describe lo que comiste.';msg.style.color='var(--red-text)';return}
+  btn.disabled=true;btn.textContent='Analizando…';
+  msg.textContent='';result.classList.remove('visible');aiData=null;
+  try{
+    var resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-api-key':'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','anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:200,
+        system:'Eres un experto en nutricion. El usuario describira una comida y debes responder UNICAMENTE con un JSON valido con dos campos: "name" (nombre corto del alimento en espanol, maximo 4 palabras) y "kcal" (calorias estimadas como numero entero). Sin texto adicional, sin explicaciones, solo el JSON.',
+        messages:[{role:'user',content:'Estimo las calorias de: '+input}]
+      })
+    });
+    var data=await resp.json();
+    var text=data.content&&data.content[0]?data.content[0].text:'';
+    var clean=text.replace(/```json|```/g,'').trim();
+    var parsed=JSON.parse(clean);
+    if(!parsed.name||!parsed.kcal)throw new Error('Respuesta invalida');
+    aiData={name:parsed.name,kcal:+parsed.kcal};
+    document.getElementById('aiResultName').textContent=aiData.name;
+    document.getElementById('aiResultKcal').textContent=aiData.kcal+' kcal';
+    result.classList.add('visible');
+    msg.textContent='';
+  }catch(e){
+    msg.textContent='No pude analizar eso. Intenta describir mejor la comida.';
+    msg.style.color='var(--red-text)';
+  }
+  btn.disabled=false;btn.textContent='✦ Analizar';
+}
+
+document.getElementById('aiBtn').addEventListener('click',askAI);
+document.getElementById('aiInput').addEventListener('keydown',function(e){if(e.key==='Enter')askAI()});
+
+document.getElementById('aiAddDay').addEventListener('click',async function(){
+  if(!aiData)return;
+  await addMealToDay(aiData.name,aiData.kcal);
+  document.getElementById('aiInput').value='';
+  document.getElementById('aiResult').classList.remove('visible');
+  document.getElementById('aiMsg').textContent='Anadido al dia.';
+  document.getElementById('aiMsg').style.color='var(--green-text)';
+  setTimeout(function(){document.getElementById('aiMsg').textContent=''},2000);
+  aiData=null;
+});
+
+document.getElementById('aiSaveMenu').addEventListener('click',async function(){
+  if(!aiData)return;
+  var msg=document.getElementById('aiMsg');
+  if(foods.some(function(f){return f.name.toLowerCase()===aiData.name.toLowerCase()})){
+    msg.textContent='"'+aiData.name+'" ya existe en el menu.';msg.style.color='var(--yellow-text)';return;
+  }
+  syncState('loading','Guardando…');
+  try{
+    var rows=await sbPost('foods',{name:aiData.name,kcal:aiData.kcal});
+    foods.push(rows[0]);
+    foods.sort(function(a,b){return a.name.localeCompare(b.name)});
+    renderMenu();syncState('ok');
+    msg.textContent='"'+aiData.name+'" guardado en el menu.';msg.style.color='var(--green-text)';
+    setTimeout(function(){msg.textContent=''},2500);
+    document.getElementById('aiInput').value='';
+    document.getElementById('aiResult').classList.remove('visible');
+    aiData=null;
+  }catch(e){syncState('err');msg.textContent='Error al guardar.';msg.style.color='var(--red-text)'}
+});
 
 async function init(){
   var overlay=document.getElementById('loadingOverlay');
