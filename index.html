@@ -35,6 +35,7 @@ h1{font-family:'Playfair Display',serif;font-size:2.4rem;letter-spacing:-0.01em;
 .sync-dot.loading{background:var(--yellow);animation:pulse 1s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 .main-grid{display:grid;grid-template-columns:1fr 380px;gap:2rem;align-items:start}
+.left-col{display:flex;flex-direction:column;gap:2rem}
 .cal-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
 .cal-header{display:flex;align-items:center;justify-content:space-between;padding:1.5rem 1.75rem;background:var(--bg3);border-bottom:1px solid var(--border)}
 .cal-title{font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--text)}
@@ -56,6 +57,23 @@ h1{font-family:'Playfair Display',serif;font-size:2.4rem;letter-spacing:-0.01em;
 .legend{display:flex;gap:1.25rem;padding:1rem 1.75rem;border-top:1px solid var(--border);flex-wrap:wrap}
 .legend-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text3)}
 .legend-dot{width:8px;height:8px;border-radius:50%}
+.report-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.report-header{display:flex;align-items:baseline;justify-content:space-between;padding:1.25rem 1.75rem;background:var(--bg3);border-bottom:1px solid var(--border)}
+.report-title{font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--text)}
+.report-month{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text3)}
+.report-stats{display:grid;grid-template-columns:repeat(3,1fr)}
+.report-stat{padding:1.25rem 1rem;text-align:center;border-right:1px solid var(--border)}
+.report-stat:last-child{border-right:none}
+.rs-num{font-size:26px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1}
+.rs-label{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-top:6px}
+.report-stat.good .rs-num{color:var(--green-text)}
+.report-stat.bad .rs-num{color:var(--red-text)}
+.report-stat.none .rs-num{color:var(--text2)}
+.report-bar{display:flex;height:6px;margin:0 1.75rem 1.5rem}
+.report-bar div{transition:width .4s ease}
+.report-bar .b-good{background:var(--green)}
+.report-bar .b-bad{background:var(--red)}
+.report-bar .b-none{background:var(--border2)}
 .right-col{display:flex;flex-direction:column;gap:1.5rem}
 .day-panel{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
 .day-top{padding:1.5rem 1.75rem 1.25rem;background:var(--bg3);border-bottom:1px solid var(--border)}
@@ -136,22 +154,36 @@ svg.ring{width:64px;height:64px;transform:rotate(-90deg)}
     </div>
   </header>
   <div class="main-grid">
-    <div class="cal-card">
-      <div class="cal-header">
-        <span class="cal-title" id="calTitle"></span>
-        <div class="cal-nav">
-          <button class="nav-btn" id="prevMonth">&#8249;</button>
-          <button class="nav-btn" id="nextMonth">&#8250;</button>
+    <div class="left-col">
+      <div class="cal-card">
+        <div class="cal-header">
+          <span class="cal-title" id="calTitle"></span>
+          <div class="cal-nav">
+            <button class="nav-btn" id="prevMonth">&#8249;</button>
+            <button class="nav-btn" id="nextMonth">&#8250;</button>
+          </div>
+        </div>
+        <div class="cal-body">
+          <div class="cal-weekdays"><span>Lu</span><span>Ma</span><span>Mi</span><span>Ju</span><span>Vi</span><span>Sa</span><span>Do</span></div>
+          <div class="cal-days" id="calDays"></div>
+        </div>
+        <div class="legend">
+          <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Dentro del limite</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--yellow)"></div>+200 kcal</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>Excedido</div>
         </div>
       </div>
-      <div class="cal-body">
-        <div class="cal-weekdays"><span>Lu</span><span>Ma</span><span>Mi</span><span>Ju</span><span>Vi</span><span>Sa</span><span>Do</span></div>
-        <div class="cal-days" id="calDays"></div>
-      </div>
-      <div class="legend">
-        <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Dentro del limite</div>
-        <div class="legend-item"><div class="legend-dot" style="background:var(--yellow)"></div>+200 kcal</div>
-        <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>Excedido</div>
+      <div class="report-card">
+        <div class="report-header">
+          <span class="report-title">Reporte mensual</span>
+          <span class="report-month" id="reportMonth"></span>
+        </div>
+        <div class="report-stats">
+          <div class="report-stat good"><div class="rs-num" id="rsGood">0</div><div class="rs-label">Buenos</div></div>
+          <div class="report-stat bad"><div class="rs-num" id="rsBad">0</div><div class="rs-label">Malos</div></div>
+          <div class="report-stat none"><div class="rs-num" id="rsNone">0</div><div class="rs-label">Sin registrar</div></div>
+        </div>
+        <div class="report-bar" id="reportBar"></div>
       </div>
     </div>
     <div class="right-col">
@@ -270,6 +302,7 @@ function renderCal(){
     (function(key){el.addEventListener('click',function(){selDate=key;renderCal();renderDay()})})(k);
     c.appendChild(el);
   }
+  renderReport();
 }
 
 document.getElementById('prevMonth').addEventListener('click',function(){
@@ -278,6 +311,33 @@ document.getElementById('prevMonth').addEventListener('click',function(){
 document.getElementById('nextMonth').addEventListener('click',function(){
   curMonth++;if(curMonth>11){curMonth=0;curYear++}renderCal();
 });
+
+function renderReport(){
+  var y=curYear,m=curMonth;
+  var dim=new Date(y,m+1,0).getDate();
+  var today=new Date();today.setHours(0,0,0,0);
+  var good=0,bad=0,none=0;
+  for(var d=1;d<=dim;d++){
+    var date=new Date(y,m,d);
+    if(date>today)continue;
+    var k=dKey(y,m,d);
+    var ms=dayMeals(k);
+    if(!ms.length){none++;continue}
+    var tot=dayTotal(k);
+    if(statusColor(tot)==='green')good++;else bad++;
+  }
+  document.getElementById('reportMonth').textContent=MN[m]+' '+y;
+  document.getElementById('rsGood').textContent=good;
+  document.getElementById('rsBad').textContent=bad;
+  document.getElementById('rsNone').textContent=none;
+  var total=good+bad+none;
+  var bar=document.getElementById('reportBar');
+  if(total===0){bar.innerHTML='';return}
+  bar.innerHTML=
+    '<div class="b-good" style="width:'+(good/total*100)+'%"></div>'+
+    '<div class="b-bad" style="width:'+(bad/total*100)+'%"></div>'+
+    '<div class="b-none" style="width:'+(none/total*100)+'%"></div>';
+}
 
 function renderDay(){
   var k=selDate;
