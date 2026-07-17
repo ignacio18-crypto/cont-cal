@@ -8,18 +8,18 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#0E0F0C;--bg2:#161712;--bg3:#1E1F1A;--bg4:#252620;
-  --border:#2E2F28;--border2:#3A3B33;
-  --text:#F2F0E8;--text2:#9A9880;--text3:#5A5948;
-  --gold:#C9A84C;--gold-dim:#7A6530;--gold-glow:rgba(201,168,76,0.12);
+  --bg:#05060B;--bg2:#0A0C16;--bg3:#10121F;--bg4:#161829;
+  --border:#232640;--border2:#2D3050;
+  --text:#EDEFF7;--text2:#8890B5;--text3:#4E5578;
+  --gold:#E23636;--gold-dim:#8C1F1F;--gold-glow:rgba(226,54,54,0.16);
+  --blue:#3D6BE0;--blue-glow:rgba(61,107,224,0.18);
   --green:#4CAF50;--green-bg:rgba(76,175,80,0.12);--green-text:#81C784;
   --yellow:#FFC107;--yellow-bg:rgba(255,193,7,0.12);--yellow-text:#FFD54F;
   --red:#F44336;--red-bg:rgba(244,67,54,0.12);--red-text:#EF9A9A;
   --r:14px;--r-sm:8px;
 }
 html{scroll-behavior:smooth}
-body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:15px;line-height:1.6}
-body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.5}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:15px;line-height:1.6;overflow-x:hidden}
 .app{position:relative;z-index:1;max-width:1140px;margin:0 auto;padding:2.5rem 1.5rem 4rem}
 header{display:flex;align-items:center;justify-content:space-between;margin-bottom:3rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border)}
 .brand{display:flex;align-items:baseline;gap:14px}
@@ -34,29 +34,32 @@ h1{font-family:'Playfair Display',serif;font-size:2.4rem;letter-spacing:-0.01em;
 .sync-dot.err{background:var(--red)}
 .sync-dot.loading{background:var(--yellow);animation:pulse 1s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-body.theme-aurora{
-  --bg:#120E1E;--bg2:#1B1430;--bg3:#241C3F;--bg4:#2E2452;
-  --border:#3A2D5C;--border2:#4C3A78;
-  --text:#F5F0FF;--text2:#B3A3D9;--text3:#7C6BA3;
-  --gold:#00E5C7;--gold-dim:#0FA893;--gold-glow:rgba(0,229,199,0.14);
-  --green:#4CE0A0;--green-bg:rgba(76,224,160,0.14);--green-text:#8CF0C4;
-  --yellow:#FFB84D;--yellow-bg:rgba(255,184,77,0.14);--yellow-text:#FFCB80;
-  --red:#FF5C8A;--red-bg:rgba(255,92,138,0.14);--red-text:#FF9DB8;
+body::before{
+  content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(ellipse 900px 500px at 15% -5%, var(--gold-glow), transparent 60%),
+    radial-gradient(ellipse 800px 600px at 105% 10%, var(--blue-glow), transparent 55%),
+    radial-gradient(ellipse 700px 500px at 50% 115%, rgba(140,31,31,0.1), transparent 60%);
+  animation:driftGlow 26s ease-in-out infinite alternate;
 }
-body.theme-aurora h1{background:linear-gradient(135deg,#F5F0FF 20%,#FF5CE0 55%,var(--gold));-webkit-background-clip:text;background-clip:text}
-body.theme-aurora .cal-day.c-green{background:rgba(76,224,160,.18)}
-body.theme-aurora .cal-day.c-yellow{background:rgba(255,184,77,.16)}
-body.theme-aurora .cal-day.c-red{background:rgba(255,92,138,.16)}
-.theme-toggle{display:flex;gap:6px;align-items:center}
-.theme-btn{width:22px;height:22px;border-radius:50%;border:2px solid var(--border2);cursor:pointer;padding:0;transition:all .2s;position:relative}
-.theme-btn[data-theme="olive"]{background:linear-gradient(135deg,#0E0F0C 50%,#C9A84C)}
-.theme-btn[data-theme="aurora"]{background:linear-gradient(135deg,#120E1E 50%,#00E5C7)}
-.theme-btn:hover{transform:scale(1.12)}
-.theme-btn.active{border-color:var(--gold)}
-.theme-btn.active::after{content:'';position:absolute;inset:-4px;border:1px solid var(--gold-dim);border-radius:50%}
+@keyframes driftGlow{
+  0%{opacity:.7;transform:translate3d(0,0,0) scale(1)}
+  100%{opacity:1;transform:translate3d(-2%,2%,0) scale(1.06)}
+}
+.stars{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.star{position:absolute;border-radius:50%;background:#fff;opacity:.5;animation:twinkle linear infinite}
+@keyframes twinkle{0%,100%{opacity:.15}50%{opacity:.9}}
+@keyframes driftUp{from{transform:translateY(0)}to{transform:translateY(-140vh)}}
+.dust{position:absolute;bottom:-10px;border-radius:50%;background:radial-gradient(circle,var(--gold) 0%,transparent 70%);opacity:.5;animation:driftUp linear infinite}
+.web-lines{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.09}
+.web-lines svg{width:100%;height:100%}
+.web-lines path{stroke:var(--text2);stroke-width:1;fill:none}
+@keyframes webPulse{0%,100%{opacity:.09}50%{opacity:.17}}
+.web-lines{animation:webPulse 9s ease-in-out infinite}
 .main-grid{display:grid;grid-template-columns:1fr 380px;gap:2rem;align-items:start}
 .left-col{display:flex;flex-direction:column;gap:2rem}
-.cal-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+@keyframes cardGlow{0%,100%{box-shadow:0 0 0 rgba(226,54,54,0)}50%{box-shadow:0 0 22px -6px rgba(226,54,54,.22)}}
+.cal-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;animation:cardGlow 7s ease-in-out infinite}
 .cal-header{display:flex;align-items:center;justify-content:space-between;padding:1.5rem 1.75rem;background:var(--bg3);border-bottom:1px solid var(--border)}
 .cal-title{font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--text)}
 .cal-nav{display:flex;gap:8px}
@@ -184,6 +187,24 @@ svg.ring{width:64px;height:64px;transform:rotate(-90deg)}
 </style>
 </head>
 <body>
+<div class="stars" id="starsLayer"></div>
+<div class="web-lines" id="webLayer">
+  <svg viewBox="0 0 1000 700" preserveAspectRatio="xMidYMid slice">
+    <path d="M -20,-20 L 240,180"/>
+    <path d="M 1020,-30 L 700,190"/>
+    <path d="M 240,180 L 260,430"/>
+    <path d="M 700,190 L 690,440"/>
+    <path d="M 260,430 L 690,440"/>
+    <path d="M 240,180 L 700,190"/>
+    <path d="M -30,340 L 260,430"/>
+    <path d="M 1030,360 L 690,440"/>
+    <path d="M 260,430 L 200,730"/>
+    <path d="M 690,440 L 760,730"/>
+    <path d="M 450,-40 L 470,305"/>
+    <path d="M 470,305 L 260,430"/>
+    <path d="M 470,305 L 690,440"/>
+  </svg>
+</div>
 <div class="loading-overlay" id="loadingOverlay">
   <div class="loader-title">Cont-CaL</div>
   <div class="loader-spinner"></div>
@@ -194,10 +215,6 @@ svg.ring{width:64px;height:64px;transform:rotate(-90deg)}
     <div class="brand"><h1>Cont-CaL</h1><span class="tagline">Registro diario</span></div>
     <div class="header-right">
       <div class="header-limit"><span>Límite diario</span><strong>1 500 kcal</strong></div>
-      <div class="theme-toggle">
-        <button class="theme-btn active" data-theme="olive" id="themeOlive" title="Tema Oliva"></button>
-        <button class="theme-btn" data-theme="aurora" id="themeAurora" title="Tema Aurora"></button>
-      </div>
       <div class="sync-status"><div class="sync-dot" id="syncDot"></div><span id="syncMsg">Conectando…</span></div>
     </div>
   </header>
@@ -318,12 +335,27 @@ async function sbDelete(table,filter){
   if(!r.ok)throw new Error(await r.text());
 }
 
-document.querySelectorAll('.theme-btn').forEach(function(b){
-  b.addEventListener('click',function(){
-    document.body.classList.toggle('theme-aurora',b.dataset.theme==='aurora');
-    document.querySelectorAll('.theme-btn').forEach(function(x){x.classList.toggle('active',x===b)});
-  });
-});
+function initBackground(){
+  var starsLayer=document.getElementById('starsLayer');
+  var starsHtml='';
+  for(var i=0;i<70;i++){
+    var size=(Math.random()*2+0.6).toFixed(1);
+    var top=(Math.random()*100).toFixed(2);
+    var left=(Math.random()*100).toFixed(2);
+    var dur=(Math.random()*4+2.5).toFixed(2);
+    var delay=(Math.random()*5).toFixed(2);
+    starsHtml+='<div class="star" style="width:'+size+'px;height:'+size+'px;top:'+top+'%;left:'+left+'%;animation-duration:'+dur+'s;animation-delay:'+delay+'s"></div>';
+  }
+  for(var j=0;j<14;j++){
+    var dsize=(Math.random()*3+2).toFixed(1);
+    var dleft=(Math.random()*100).toFixed(2);
+    var ddur=(Math.random()*14+12).toFixed(2);
+    var ddelay=(Math.random()*16).toFixed(2);
+    starsHtml+='<div class="dust" style="width:'+dsize+'px;height:'+dsize+'px;left:'+dleft+'%;animation-duration:'+ddur+'s;animation-delay:-'+ddelay+'s"></div>';
+  }
+  starsLayer.innerHTML=starsHtml;
+}
+initBackground();
 
 var confirmOkHandler=null;
 function showConfirm(title,text,onConfirm){
