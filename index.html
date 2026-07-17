@@ -34,6 +34,26 @@ h1{font-family:'Playfair Display',serif;font-size:2.4rem;letter-spacing:-0.01em;
 .sync-dot.err{background:var(--red)}
 .sync-dot.loading{background:var(--yellow);animation:pulse 1s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+body.theme-aurora{
+  --bg:#120E1E;--bg2:#1B1430;--bg3:#241C3F;--bg4:#2E2452;
+  --border:#3A2D5C;--border2:#4C3A78;
+  --text:#F5F0FF;--text2:#B3A3D9;--text3:#7C6BA3;
+  --gold:#00E5C7;--gold-dim:#0FA893;--gold-glow:rgba(0,229,199,0.14);
+  --green:#4CE0A0;--green-bg:rgba(76,224,160,0.14);--green-text:#8CF0C4;
+  --yellow:#FFB84D;--yellow-bg:rgba(255,184,77,0.14);--yellow-text:#FFCB80;
+  --red:#FF5C8A;--red-bg:rgba(255,92,138,0.14);--red-text:#FF9DB8;
+}
+body.theme-aurora h1{background:linear-gradient(135deg,#F5F0FF 20%,#FF5CE0 55%,var(--gold));-webkit-background-clip:text;background-clip:text}
+body.theme-aurora .cal-day.c-green{background:rgba(76,224,160,.18)}
+body.theme-aurora .cal-day.c-yellow{background:rgba(255,184,77,.16)}
+body.theme-aurora .cal-day.c-red{background:rgba(255,92,138,.16)}
+.theme-toggle{display:flex;gap:6px;align-items:center}
+.theme-btn{width:22px;height:22px;border-radius:50%;border:2px solid var(--border2);cursor:pointer;padding:0;transition:all .2s;position:relative}
+.theme-btn[data-theme="olive"]{background:linear-gradient(135deg,#0E0F0C 50%,#C9A84C)}
+.theme-btn[data-theme="aurora"]{background:linear-gradient(135deg,#120E1E 50%,#00E5C7)}
+.theme-btn:hover{transform:scale(1.12)}
+.theme-btn.active{border-color:var(--gold)}
+.theme-btn.active::after{content:'';position:absolute;inset:-4px;border:1px solid var(--gold-dim);border-radius:50%}
 .main-grid{display:grid;grid-template-columns:1fr 380px;gap:2rem;align-items:start}
 .left-col{display:flex;flex-direction:column;gap:2rem}
 .cal-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
@@ -139,6 +159,20 @@ svg.ring{width:64px;height:64px;transform:rotate(-90deg)}
 .menu-new-row input[type="number"]:focus{border-color:var(--gold-dim);box-shadow:0 0 0 3px var(--gold-glow)}
 .btn-create{background:var(--bg4);color:var(--gold);border:1px solid var(--gold-dim);border-radius:var(--r-sm);padding:9px 14px;font-family:'Outfit',sans-serif;font-size:12px;font-weight:600;cursor:pointer;letter-spacing:.04em;transition:all .2s;white-space:nowrap;flex-shrink:0}
 .btn-create:hover{background:var(--gold);color:#0E0F0C;border-color:var(--gold)}.btn-create:active{transform:scale(.98)}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:opacity .2s}
+.modal-overlay.show{opacity:1;pointer-events:auto}
+.modal-box{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r);padding:1.75rem;width:340px;max-width:90vw;box-shadow:0 20px 50px rgba(0,0,0,.4);transform:translateY(10px) scale(.97);transition:transform .2s}
+.modal-overlay.show .modal-box{transform:translateY(0) scale(1)}
+.modal-icon{width:44px;height:44px;border-radius:50%;background:var(--red-bg);color:var(--red-text);display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:1rem}
+.modal-box h3{font-family:'Playfair Display',serif;font-size:1.15rem;color:var(--text);margin-bottom:.5rem;font-weight:600}
+.modal-box p{font-size:13px;color:var(--text2);line-height:1.5;margin-bottom:1.5rem}
+.modal-box p strong{color:var(--text)}
+.modal-actions{display:flex;gap:10px}
+.modal-actions button{flex:1;padding:10px 14px;border-radius:var(--r-sm);font-family:'Outfit',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;letter-spacing:.02em}
+.modal-cancel{background:var(--bg4);border:1px solid var(--border2);color:var(--text2)}
+.modal-cancel:hover{border-color:var(--text3);color:var(--text)}
+.modal-danger{background:var(--red);border:1px solid var(--red);color:#1a0a0a}
+.modal-danger:hover{filter:brightness(1.1)}
 .loading-overlay{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:999;gap:1rem;transition:opacity .4s}
 .loading-overlay.hidden{opacity:0;pointer-events:none}
 .loader-title{font-family:'Playfair Display',serif;font-size:2rem;background:linear-gradient(135deg,#F2F0E8 30%,var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
@@ -160,6 +194,10 @@ svg.ring{width:64px;height:64px;transform:rotate(-90deg)}
     <div class="brand"><h1>Cont-CaL</h1><span class="tagline">Registro diario</span></div>
     <div class="header-right">
       <div class="header-limit"><span>Límite diario</span><strong>1 500 kcal</strong></div>
+      <div class="theme-toggle">
+        <button class="theme-btn active" data-theme="olive" id="themeOlive" title="Tema Oliva"></button>
+        <button class="theme-btn" data-theme="aurora" id="themeAurora" title="Tema Aurora"></button>
+      </div>
       <div class="sync-status"><div class="sync-dot" id="syncDot"></div><span id="syncMsg">Conectando…</span></div>
     </div>
   </header>
@@ -249,6 +287,17 @@ svg.ring{width:64px;height:64px;transform:rotate(-90deg)}
     </div>
   </div>
 </div>
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal-box">
+    <div class="modal-icon">&#9888;</div>
+    <h3 id="confirmTitle">Eliminar alimento</h3>
+    <p id="confirmText">Esta accion no se puede deshacer.</p>
+    <div class="modal-actions">
+      <button class="modal-cancel" id="confirmCancelBtn">Cancelar</button>
+      <button class="modal-danger" id="confirmOkBtn">Eliminar</button>
+    </div>
+  </div>
+</div>
 <script>
 const SUPA_URL='https://bksqmwwvxrqygvkoiqkc.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJrc3Ftd3d2eHJxeWd2a29pcWtjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk5Mjk1MzYsImV4cCI6MjA5NTUwNTUzNn0.wZgaEi5GHuvi-qLqGrZukLBkSCqAerdbvXdC_aoLLOo';
@@ -268,6 +317,34 @@ async function sbDelete(table,filter){
   const r=await fetch(SUPA_URL+'/rest/v1/'+table+'?'+filter,{method:'DELETE',headers:H});
   if(!r.ok)throw new Error(await r.text());
 }
+
+document.querySelectorAll('.theme-btn').forEach(function(b){
+  b.addEventListener('click',function(){
+    document.body.classList.toggle('theme-aurora',b.dataset.theme==='aurora');
+    document.querySelectorAll('.theme-btn').forEach(function(x){x.classList.toggle('active',x===b)});
+  });
+});
+
+var confirmOkHandler=null;
+function showConfirm(title,text,onConfirm){
+  document.getElementById('confirmTitle').textContent=title;
+  document.getElementById('confirmText').innerHTML=text;
+  document.getElementById('confirmModal').classList.add('show');
+  confirmOkHandler=onConfirm;
+}
+function hideConfirm(){
+  document.getElementById('confirmModal').classList.remove('show');
+  confirmOkHandler=null;
+}
+document.getElementById('confirmCancelBtn').addEventListener('click',hideConfirm);
+document.getElementById('confirmModal').addEventListener('click',function(e){
+  if(e.target.id==='confirmModal')hideConfirm();
+});
+document.getElementById('confirmOkBtn').addEventListener('click',function(){
+  var fn=confirmOkHandler;
+  hideConfirm();
+  if(fn)fn();
+});
 
 const LIMIT=1500;
 const CIRC=2*Math.PI*27;
@@ -464,14 +541,19 @@ function renderMenu(){
     });
   });
   g.querySelectorAll('.mi-del').forEach(function(b){
-    b.addEventListener('click',function(){deleteFood(+b.dataset.id)});
+    b.addEventListener('click',function(){
+      var id=+b.dataset.id,name=b.dataset.name,kcal=b.dataset.kcal;
+      showConfirm('Eliminar alimento','¿Seguro que quieres eliminar <strong>"'+esc(name)+'"</strong> ('+kcal+' kcal) de tu menu? Esta accion no se puede deshacer.',function(){
+        deleteFood(id);
+      });
+    });
   });
 }
 
 function menuItemHtml(f,usage){
   var uses=usage[f.name.toLowerCase()]||0;
   var badge=uses>0?'<span class="menu-item-uses">'+uses+'&times;</span>':'';
-  return '<div class="menu-item">'+badge+'<div class="menu-item-name">'+esc(f.name)+'</div><div class="menu-item-kcal">'+f.kcal+'<span> kcal</span></div><div class="menu-item-actions"><button class="mi-btn mi-add" data-id="'+f.id+'" data-name="'+esc(f.name)+'" data-kcal="'+f.kcal+'">+ Anadir</button><button class="mi-btn mi-del" data-id="'+f.id+'">X</button></div></div>';
+  return '<div class="menu-item">'+badge+'<div class="menu-item-name">'+esc(f.name)+'</div><div class="menu-item-kcal">'+f.kcal+'<span> kcal</span></div><div class="menu-item-actions"><button class="mi-btn mi-add" data-id="'+f.id+'" data-name="'+esc(f.name)+'" data-kcal="'+f.kcal+'">+ Anadir</button><button class="mi-btn mi-del" data-id="'+f.id+'" data-name="'+esc(f.name)+'" data-kcal="'+f.kcal+'">X</button></div></div>';
 }
 
 document.getElementById('menuSearch').addEventListener('input',renderMenu);
