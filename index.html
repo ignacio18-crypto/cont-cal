@@ -68,7 +68,26 @@ body::before{
 .cal-body{padding:1.5rem 1.75rem}
 .cal-weekdays{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:10px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--text3);margin-bottom:.75rem}
 .cal-days{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
-.cal-day{aspect-ratio:1;border-radius:var(--r-sm);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:13px;cursor:pointer;border:1px solid transparent;transition:all .2s;font-weight:400}
+.cal-day{aspect-ratio:1;border-radius:var(--r-sm);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:13px;cursor:pointer;border:1px solid transparent;transition:all .2s;font-weight:400;position:relative}
+.cal-day.has-ex::after{content:'';position:absolute;top:4px;right:4px;width:5px;height:5px;border-radius:50%;background:var(--blue);box-shadow:0 0 4px var(--blue)}
+.exercise-block{padding:1.25rem 1.75rem 1.5rem;border-top:1px solid var(--border);background:var(--bg3)}
+.exercise-block .section-label{margin-bottom:.75rem}
+.exercise-btns{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:.9rem}
+.ex-btn{background:var(--bg4);border:1px solid var(--border2);color:var(--blue);border-radius:var(--r-sm);padding:12px 6px;font-family:'Outfit',sans-serif;font-size:12px;font-weight:600;letter-spacing:.03em;cursor:pointer;transition:all .15s;display:flex;flex-direction:column;align-items:center;gap:5px}
+.ex-btn .ex-ic{font-size:18px;line-height:1}
+.ex-btn:hover{border-color:var(--blue);background:var(--blue-glow);transform:translateY(-2px)}
+.ex-btn:active{transform:translateY(0) scale(.97)}
+.ex-btn.just-added{background:var(--blue);color:#05060B;border-color:var(--blue)}
+.exercise-today{display:flex;flex-direction:column;gap:8px}
+.ex-chip{display:flex;align-items:center;justify-content:space-between;padding:9px 13px;background:var(--bg4);border:1px solid var(--border2);border-radius:var(--r-sm);gap:10px;animation:slideIn .25s ease}
+.ex-chip-name{font-size:13px;color:var(--text);display:flex;align-items:center;gap:8px}
+.ex-chip-name .ex-dot{width:7px;height:7px;border-radius:50%;background:var(--blue);flex-shrink:0}
+.ex-chip-del{background:none;border:none;cursor:pointer;color:var(--text3);font-size:16px;line-height:1;width:20px;height:20px;display:flex;align-items:center;justify-content:center;border-radius:4px;transition:all .15s;padding:0}
+.ex-chip-del:hover{color:var(--red);background:var(--red-bg)}
+.no-ex{padding:.5rem 0;text-align:center;color:var(--text3);font-size:12px;font-style:italic}
+.ex-report-days{padding:1rem 1.75rem 0;font-size:13px;color:var(--text2)}
+.ex-report-days strong{color:var(--blue);font-size:16px;font-variant-numeric:tabular-nums}
+.report-stat.ex-pecho .rs-num,.report-stat.ex-pierna .rs-num,.report-stat.ex-abdomen .rs-num{color:var(--blue)}
 .cal-day:hover{background:var(--bg4);border-color:var(--border2)}
 .cal-day.empty{cursor:default}.cal-day.empty:hover{background:transparent;border-color:transparent}
 .cal-day.today{border-color:var(--gold-dim)!important}
@@ -250,6 +269,18 @@ svg.ring{width:64px;height:64px;transform:rotate(-90deg)}
         </div>
         <div class="report-bar" id="reportBar"></div>
       </div>
+      <div class="report-card">
+        <div class="report-header">
+          <span class="report-title">Reporte de ejercicio</span>
+          <span class="report-month" id="exReportMonth"></span>
+        </div>
+        <div class="ex-report-days" id="exReportDays"></div>
+        <div class="report-stats">
+          <div class="report-stat ex-pecho"><div class="rs-num" id="rsPecho">0</div><div class="rs-label">Pecho</div></div>
+          <div class="report-stat ex-pierna"><div class="rs-num" id="rsPierna">0</div><div class="rs-label">Pierna</div></div>
+          <div class="report-stat ex-abdomen"><div class="rs-num" id="rsAbdomen">0</div><div class="rs-label">Abdomen</div></div>
+        </div>
+      </div>
     </div>
     <div class="right-col">
       <div class="day-panel">
@@ -299,6 +330,15 @@ svg.ring{width:64px;height:64px;transform:rotate(-90deg)}
             <button class="btn-create" id="createFoodBtn">+ Crear</button>
           </div>
           <div id="createFoodMsg" style="font-size:11px;margin-top:6px;min-height:16px"></div>
+        </div>
+        <div class="exercise-block">
+          <div class="section-label">Registrar ejercicio de hoy</div>
+          <div class="exercise-btns">
+            <button class="ex-btn" data-type="Pecho"><span class="ex-ic">&#128170;</span>Pecho</button>
+            <button class="ex-btn" data-type="Pierna"><span class="ex-ic">&#129461;</span>Pierna</button>
+            <button class="ex-btn" data-type="Abdomen"><span class="ex-ic">&#128293;</span>Abdomen</button>
+          </div>
+          <div class="exercise-today" id="exerciseToday"><div class="no-ex">Aun no has registrado ejercicio hoy</div></div>
         </div>
       </div>
     </div>
@@ -382,6 +422,7 @@ const LIMIT=1500;
 const CIRC=2*Math.PI*27;
 let foods=[];
 let meals=[];
+let exercises=[];
 let selDate=todayKey();
 let curYear=new Date().getFullYear();
 let curMonth=new Date().getMonth();
@@ -392,6 +433,7 @@ function dKey(y,m,d){return y+'-'+p(m+1)+'-'+p(d)}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 function dayMeals(date){return meals.filter(m=>m.date===date)}
 function dayTotal(date){return dayMeals(date).reduce(function(s,m){return s+m.kcal},0)}
+function dayExercises(date){return exercises.filter(e=>e.date===date)}
 function statusColor(t){return t<=LIMIT?'green':t<=LIMIT+200?'yellow':'red'}
 
 function syncState(state,msg){
@@ -419,9 +461,11 @@ function renderCal(){
     var k=dKey(y,m,d);
     var tot=dayTotal(k);
     var has=dayMeals(k).length>0;
+    var hasEx=dayExercises(k).length>0;
     var el=document.createElement('div');
     el.className='cal-day';
     if(has)el.classList.add('c-'+statusColor(tot));
+    if(hasEx)el.classList.add('has-ex');
     if(k===today)el.classList.add('today');
     if(k===selDate)el.classList.add('selected');
     el.innerHTML='<span class="dn">'+d+'</span>'+(has?'<div class="dot"></div>':'');
@@ -429,6 +473,7 @@ function renderCal(){
     c.appendChild(el);
   }
   renderReport();
+  renderExerciseReport();
 }
 
 document.getElementById('prevMonth').addEventListener('click',function(){
@@ -437,6 +482,30 @@ document.getElementById('prevMonth').addEventListener('click',function(){
 document.getElementById('nextMonth').addEventListener('click',function(){
   curMonth++;if(curMonth>11){curMonth=0;curYear++}renderCal();
 });
+
+function renderExerciseReport(){
+  var y=curYear,m=curMonth;
+  var dim=new Date(y,m+1,0).getDate();
+  var today=new Date();today.setHours(0,0,0,0);
+  var counts={Pecho:0,Pierna:0,Abdomen:0};
+  var daysSet={};
+  var daysPassed=0;
+  for(var d=1;d<=dim;d++){
+    var date=new Date(y,m,d);
+    if(date>today)continue;
+    daysPassed++;
+    var k=dKey(y,m,d);
+    var es=dayExercises(k);
+    if(es.length)daysSet[k]=true;
+    es.forEach(function(e){if(counts[e.type]!==undefined)counts[e.type]++});
+  }
+  document.getElementById('exReportMonth').textContent=MN[m]+' '+y;
+  document.getElementById('rsPecho').textContent=counts.Pecho;
+  document.getElementById('rsPierna').textContent=counts.Pierna;
+  document.getElementById('rsAbdomen').textContent=counts.Abdomen;
+  var trainedDays=Object.keys(daysSet).length;
+  document.getElementById('exReportDays').innerHTML='Entrenaste <strong>'+trainedDays+'</strong> de '+daysPassed+' dias transcurridos este mes';
+}
 
 function renderReport(){
   var y=curYear,m=curMonth;
@@ -493,6 +562,7 @@ function renderDay(){
     sb.innerHTML='<span class="status-pill" style="background:'+bgs[st]+';color:'+txts[st]+'">'+txt+'</span>';
   }
   renderMeals(k);
+  renderExerciseToday(k);
 }
 
 function renderMeals(k){
@@ -506,6 +576,41 @@ function renderMeals(k){
     b.addEventListener('click',function(){deleteMeal(+b.dataset.id)});
   });
 }
+
+function renderExerciseToday(k){
+  var es=dayExercises(k);
+  var el=document.getElementById('exerciseToday');
+  if(!es.length){el.innerHTML='<div class="no-ex">Aun no has registrado ejercicio hoy</div>';return}
+  el.innerHTML=es.map(function(e){
+    return '<div class="ex-chip"><span class="ex-chip-name"><span class="ex-dot"></span>'+esc(e.type)+'</span><button class="ex-chip-del" data-id="'+e.id+'" title="Eliminar">x</button></div>';
+  }).join('');
+  el.querySelectorAll('.ex-chip-del').forEach(function(b){
+    b.addEventListener('click',function(){deleteExercise(+b.dataset.id)});
+  });
+}
+
+async function addExercise(type,btn){
+  syncState('loading','Guardando…');
+  try{
+    var rows=await sbPost('exercises',{date:selDate,type:type});
+    exercises.push(rows[0]);
+    renderCal();renderExerciseToday(selDate);syncState('ok');
+    if(btn){btn.classList.add('just-added');setTimeout(function(){btn.classList.remove('just-added')},600)}
+  }catch(e){syncState('err');alert('Error: '+e.message+'\n\nAsegurate de haber creado la tabla "exercises" en Supabase.')}
+}
+
+async function deleteExercise(id){
+  syncState('loading','Eliminando…');
+  try{
+    await sbDelete('exercises','id=eq.'+id);
+    exercises=exercises.filter(function(e){return e.id!==id});
+    renderCal();renderExerciseToday(selDate);syncState('ok');
+  }catch(e){syncState('err')}
+}
+
+document.querySelectorAll('.ex-btn').forEach(function(b){
+  b.addEventListener('click',function(){addExercise(b.dataset.type,b)});
+});
 
 async function addMealToDay(name,kcal){
   syncState('loading','Guardando…');
@@ -647,6 +752,13 @@ async function init(){
     foods=await sbGet('foods','order=name.asc');
     loaderMsg.textContent='Cargando historial…';
     meals=await sbGet('meals','order=date.asc');
+    loaderMsg.textContent='Cargando ejercicios…';
+    try{
+      exercises=await sbGet('exercises','order=date.asc');
+    }catch(exErr){
+      exercises=[];
+      console.warn('Tabla "exercises" no encontrada en Supabase. Crea la tabla para habilitar el registro de ejercicio.');
+    }
     syncState('ok');
     overlay.classList.add('hidden');
     setTimeout(function(){overlay.style.display='none'},500);
