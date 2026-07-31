@@ -16,6 +16,7 @@
   --green:#4CAF50;--green-bg:rgba(76,175,80,0.12);--green-text:#81C784;
   --yellow:#FFC107;--yellow-bg:rgba(255,193,7,0.12);--yellow-text:#FFD54F;
   --red:#F44336;--red-bg:rgba(244,67,54,0.12);--red-text:#EF9A9A;
+  --purple:#8B5CF6;--purple-dim:#6D3FD1;
   --r:14px;--r-sm:8px;
 }
 html{scroll-behavior:smooth}
@@ -70,7 +71,6 @@ body::before{
 .cal-days{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
 .cal-day{aspect-ratio:1;border-radius:var(--r-sm);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:13px;cursor:pointer;border:1px solid transparent;transition:all .2s;font-weight:400;position:relative}
 .cal-day.has-ex::after{content:'';position:absolute;top:4px;right:4px;width:5px;height:5px;border-radius:50%;background:var(--blue);box-shadow:0 0 4px var(--blue)}
-.cal-day.is-rest::before{content:'\2605';position:absolute;top:3px;left:4px;font-size:8px;color:var(--gold);line-height:1}
 .exercise-block{padding:1.25rem 1.75rem 1.5rem;border-top:1px solid var(--border);background:var(--bg3)}
 .exercise-block .section-label{margin-bottom:.75rem}
 .exercise-btns{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:.9rem}
@@ -94,6 +94,9 @@ body::before{
 .cal-day.today{border-color:var(--gold-dim)!important}
 .cal-day.selected{background:var(--gold-glow)!important;border-color:var(--gold)!important;color:var(--gold)!important;font-weight:600}
 .cal-day.c-green{background:rgba(76,175,80,.15)}.cal-day.c-yellow{background:rgba(255,193,7,.13)}.cal-day.c-red{background:rgba(244,67,54,.13)}
+.cal-day.is-rest.c-green{background:linear-gradient(135deg,var(--purple) 0%,var(--purple) 50%,rgba(76,175,80,.4) 50%,rgba(76,175,80,.4) 100%)}
+.cal-day.is-rest.c-red{background:linear-gradient(135deg,var(--purple) 0%,var(--purple) 50%,rgba(244,67,54,.4) 50%,rgba(244,67,54,.4) 100%)}
+.cal-day.is-rest.selected{background:linear-gradient(135deg,var(--purple) 0%,var(--purple) 50%,var(--gold-glow) 50%,var(--gold-glow) 100%)!important;border-color:var(--gold)!important}
 .cal-day .dn{font-size:14px;font-weight:500;line-height:1}
 .cal-day .dot{width:4px;height:4px;border-radius:50%;margin-top:3px}
 .cal-day.c-green .dot{background:var(--green)}.cal-day.c-yellow .dot{background:var(--yellow)}.cal-day.c-red .dot{background:var(--red)}.cal-day.selected .dot{background:var(--gold)}
@@ -256,7 +259,8 @@ svg.ring{width:64px;height:64px;transform:rotate(-90deg)}
         <div class="legend">
           <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Dentro del limite</div>
           <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>Excedido</div>
-          <div class="legend-item"><span class="legend-star">&#9733;</span>Dia de descanso (hasta 1 700 kcal)</div>
+          <div class="legend-item"><div class="legend-dot" style="background:linear-gradient(135deg,var(--purple) 50%,var(--green) 50%)"></div>Descanso &le;1 700 kcal</div>
+          <div class="legend-item"><div class="legend-dot" style="background:linear-gradient(135deg,var(--purple) 50%,var(--red) 50%)"></div>Descanso &gt;1 700 kcal</div>
         </div>
       </div>
       <div class="report-card">
