@@ -70,6 +70,7 @@ body::before{
 .cal-days{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
 .cal-day{aspect-ratio:1;border-radius:var(--r-sm);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:13px;cursor:pointer;border:1px solid transparent;transition:all .2s;font-weight:400;position:relative}
 .cal-day.has-ex::after{content:'';position:absolute;top:4px;right:4px;width:5px;height:5px;border-radius:50%;background:var(--blue);box-shadow:0 0 4px var(--blue)}
+.cal-day.is-rest::before{content:'\2605';position:absolute;top:3px;left:4px;font-size:8px;color:var(--gold);line-height:1}
 .exercise-block{padding:1.25rem 1.75rem 1.5rem;border-top:1px solid var(--border);background:var(--bg3)}
 .exercise-block .section-label{margin-bottom:.75rem}
 .exercise-btns{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:.9rem}
@@ -99,6 +100,7 @@ body::before{
 .legend{display:flex;gap:1.25rem;padding:1rem 1.75rem;border-top:1px solid var(--border);flex-wrap:wrap}
 .legend-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text3)}
 .legend-dot{width:8px;height:8px;border-radius:50%}
+.legend-star{font-size:10px;color:var(--gold)}
 .report-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
 .report-header{display:flex;align-items:baseline;justify-content:space-between;padding:1.25rem 1.75rem;background:var(--bg3);border-bottom:1px solid var(--border)}
 .report-title{font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--text)}
@@ -128,7 +130,7 @@ svg.ring{width:64px;height:64px;transform:rotate(-90deg)}
 .ring-label{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .ring-label .pct{font-size:12px;font-weight:600;line-height:1}
 .ring-label .kcal-tiny{font-size:9px;color:var(--text3)}
-.status-bar{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:500}
+.status-bar{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:500;flex-wrap:wrap}
 .status-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:99px;font-size:11px;font-weight:600;letter-spacing:.04em}
 .today-meals{padding:1rem 1.75rem;display:flex;flex-direction:column;gap:8px;max-height:200px;overflow-y:auto}
 .no-meals{padding:1.5rem;text-align:center;color:var(--text3);font-size:13px;font-style:italic}
@@ -253,8 +255,8 @@ svg.ring{width:64px;height:64px;transform:rotate(-90deg)}
         </div>
         <div class="legend">
           <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Dentro del limite</div>
-          <div class="legend-item"><div class="legend-dot" style="background:var(--yellow)"></div>+200 kcal</div>
           <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>Excedido</div>
+          <div class="legend-item"><span class="legend-star">&#9733;</span>Dia de descanso (hasta 1 700 kcal)</div>
         </div>
       </div>
       <div class="report-card">
@@ -419,6 +421,7 @@ document.getElementById('confirmOkBtn').addEventListener('click',function(){
 });
 
 const LIMIT=1500;
+const REST_LIMIT=1700;
 const CIRC=2*Math.PI*27;
 let foods=[];
 let meals=[];
@@ -434,7 +437,46 @@ function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').repl
 function dayMeals(date){return meals.filter(m=>m.date===date)}
 function dayTotal(date){return dayMeals(date).reduce(function(s,m){return s+m.kcal},0)}
 function dayExercises(date){return exercises.filter(e=>e.date===date)}
-function statusColor(t){return t<=LIMIT?'green':t<=LIMIT+200?'yellow':'red'}
+
+// --- Dia de descanso: una vez por semana se permite llegar hasta 1700 kcal.
+// Se asigna automaticamente al primer dia de la semana (Lunes a Domingo) que
+// supere las 1500 kcal.
+function mondayOf(dateObj){
+  var day=dateObj.getDay();
+  var diff=day===0?-6:1-day;
+  var d=new Date(dateObj);
+  d.setDate(d.getDate()+diff);
+  d.setHours(0,0,0,0);
+  return d;
+}
+function getWeekDates(dateKey){
+  var parts=dateKey.split('-').map(Number);
+  var d=new Date(parts[0],parts[1]-1,parts[2]);
+  var mon=mondayOf(d);
+  var arr=[];
+  for(var i=0;i<7;i++){
+    var dd=new Date(mon);
+    dd.setDate(mon.getDate()+i);
+    arr.push(dKey(dd.getFullYear(),dd.getMonth(),dd.getDate()));
+  }
+  return arr;
+}
+function getRestDayForWeek(weekDates){
+  for(var i=0;i<weekDates.length;i++){
+    if(dayTotal(weekDates[i])>LIMIT)return weekDates[i];
+  }
+  return null;
+}
+function isRestDay(dateKey){
+  var week=getWeekDates(dateKey);
+  return getRestDayForWeek(week)===dateKey;
+}
+function statusColorForDate(k){
+  var tot=dayTotal(k);
+  if(tot<=LIMIT)return 'green';
+  if(isRestDay(k))return tot<=REST_LIMIT?'green':'red';
+  return 'red';
+}
 
 function syncState(state,msg){
   var dot=document.getElementById('syncDot');
@@ -459,13 +501,13 @@ function renderCal(){
   for(var i=0;i<off;i++){var e=document.createElement('div');e.className='cal-day empty';c.appendChild(e)}
   for(var d=1;d<=dim;d++){
     var k=dKey(y,m,d);
-    var tot=dayTotal(k);
     var has=dayMeals(k).length>0;
     var hasEx=dayExercises(k).length>0;
     var el=document.createElement('div');
     el.className='cal-day';
-    if(has)el.classList.add('c-'+statusColor(tot));
+    if(has)el.classList.add('c-'+statusColorForDate(k));
     if(hasEx)el.classList.add('has-ex');
+    if(isRestDay(k))el.classList.add('is-rest');
     if(k===today)el.classList.add('today');
     if(k===selDate)el.classList.add('selected');
     el.innerHTML='<span class="dn">'+d+'</span>'+(has?'<div class="dot"></div>':'');
@@ -518,8 +560,7 @@ function renderReport(){
     var k=dKey(y,m,d);
     var ms=dayMeals(k);
     if(!ms.length){none++;continue}
-    var tot=dayTotal(k);
-    if(statusColor(tot)==='green')good++;else bad++;
+    if(statusColorForDate(k)==='green')good++;else bad++;
   }
   document.getElementById('reportMonth').textContent=MN[m]+' '+y;
   document.getElementById('rsGood').textContent=good;
@@ -542,11 +583,13 @@ function renderDay(){
   var raw=k===today?'Hoy, '+date.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'}):date.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   document.getElementById('dayLabel').textContent=raw.charAt(0).toUpperCase()+raw.slice(1);
   var tot=dayTotal(k);
-  var st=statusColor(tot);
-  var colors={green:'var(--green)',yellow:'var(--yellow)',red:'var(--red)'};
+  var st=statusColorForDate(k);
+  var restToday=isRestDay(k);
+  var colors={green:'var(--green)',red:'var(--red)'};
   document.getElementById('calCounter').textContent=tot.toLocaleString('es');
   document.getElementById('calCounter').style.color=tot>0?colors[st]:'var(--text2)';
-  var pct=Math.min(tot/LIMIT,1);
+  var effectiveLimit=(restToday&&tot>LIMIT)?REST_LIMIT:LIMIT;
+  var pct=Math.min(tot/effectiveLimit,1);
   var rf=document.getElementById('ringFill');
   rf.style.strokeDashoffset=CIRC-(pct*CIRC);
   rf.style.stroke=tot>0?colors[st]:'var(--border2)';
@@ -554,12 +597,25 @@ function renderDay(){
   rp.textContent=Math.round(pct*100)+'%';
   rp.style.color=tot>0?colors[st]:'var(--text3)';
   var sb=document.getElementById('statusBar');
-  if(tot===0){sb.innerHTML=''}else{
-    var rem=LIMIT-tot;
-    var bgs={green:'var(--green-bg)',yellow:'var(--yellow-bg)',red:'var(--red-bg)'};
-    var txts={green:'var(--green-text)',yellow:'var(--yellow-text)',red:'var(--red-text)'};
-    var txt=st==='green'?'Quedan '+rem+' kcal':st==='yellow'?'+'+Math.abs(rem)+' kcal':'Excedido en '+Math.abs(rem)+' kcal';
-    sb.innerHTML='<span class="status-pill" style="background:'+bgs[st]+';color:'+txts[st]+'">'+txt+'</span>';
+  if(tot===0){
+    sb.innerHTML='';
+  }else{
+    var bgs={green:'var(--green-bg)',red:'var(--red-bg)'};
+    var txts={green:'var(--green-text)',red:'var(--red-text)'};
+    var pills='';
+    if(restToday&&tot>LIMIT){
+      pills+='<span class="status-pill" style="background:'+bgs[st]+';color:'+txts[st]+'">Ya utilizaste tu dia de descanso</span>';
+      if(tot<=REST_LIMIT){
+        pills+='<span class="status-pill" style="background:'+bgs.green+';color:'+txts.green+'">Quedan '+(REST_LIMIT-tot)+' kcal</span>';
+      }else{
+        pills+='<span class="status-pill" style="background:'+bgs.red+';color:'+txts.red+'">Excedido en '+(tot-REST_LIMIT)+' kcal</span>';
+      }
+    }else if(st==='green'){
+      pills='<span class="status-pill" style="background:'+bgs.green+';color:'+txts.green+'">Quedan '+(LIMIT-tot)+' kcal</span>';
+    }else{
+      pills='<span class="status-pill" style="background:'+bgs.red+';color:'+txts.red+'">Excedido en '+(tot-LIMIT)+' kcal</span>';
+    }
+    sb.innerHTML=pills;
   }
   renderMeals(k);
   renderExerciseToday(k);
